@@ -1,5 +1,5 @@
 <nav class="navbar navbar-expand-lg navbar-dark navbar-top sticky-top">
-  <div class="container-fluid px-lg-4">
+  <div class="container-fluid px-3 px-lg-4">
     <div class="d-flex align-items-center">
       {% if user.is_authenticated and not hide_sidebar %}
       <!-- Mobile/Tablet Sidebar Drawer Hamburger Button -->
@@ -23,13 +23,13 @@
 
     <div class="collapse navbar-collapse" id="navbarMain">
       <!-- Search Bar in Navbar with Active Keyboard Shortcut -->
-      <form class="d-flex mx-lg-auto my-2 my-lg-0 col-12 col-lg-5" action="{% url 'databank:explore' %}" method="get" role="search">
+      <form class="d-flex my-2 my-lg-0 navbar-search-form" action="{% url 'databank:explore' %}" method="get" role="search">
         <div class="input-group input-group-sm w-100 search-input-group">
           <span class="input-group-text search-input-icon">
             <i class="bi bi-search"></i>
           </span>
-          <input class="form-control search-input" id="globalSearchInput" type="search" name="q" placeholder="Search datasets, companies, industries..." aria-label="Search market databank" value="{{ request.GET.q }}">
-          <span class="input-group-text search-kbd-wrap d-none d-md-flex">
+          <input class="form-control search-input" id="globalSearchInput" type="search" name="q" placeholder="Search datasets, companies..." aria-label="Search market databank" value="{{ request.GET.q }}">
+          <span class="input-group-text search-kbd-wrap d-none d-xl-flex">
             <kbd class="search-kbd" title="Press Ctrl + K to focus search">Ctrl K</kbd>
           </span>
           <button class="btn btn-search-submit" type="submit">Search</button>
@@ -62,20 +62,20 @@
         </li>
 
         <!-- Prominent + New Dataset Action Button -->
-        <li class="nav-item ms-lg-1 my-1 my-lg-0">
-          <a class="btn btn-primary-custom btn-sm px-3 d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'databank:create' %}">
+        <li class="nav-item ms-lg-1 my-1 my-lg-0 flex-shrink-0">
+          <a class="btn btn-primary-custom btn-sm px-2 px-xl-3 d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'databank:create' %}">
             <i class="bi bi-plus-lg"></i>
             <span>New Dataset</span>
           </a>
         </li>
 
         <!-- User Dropdown with Circular Initial Avatar & Organized Sections -->
-        <li class="nav-item dropdown ms-lg-2">
+        <li class="nav-item dropdown ms-lg-2 flex-shrink-0">
           <a class="nav-link dropdown-toggle text-light d-flex align-items-center gap-2 py-1 px-2 rounded user-menu-pill" href="#" id="userMenuDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <div class="avatar-circle-sm">
               {{ user.username|first|upper }}
             </div>
-            <span class="small fw-semibold text-truncate" style="max-width: 120px;">{{ user.username }}</span>
+            <span class="small fw-semibold text-truncate user-menu-name">{{ user.username }}</span>
           </a>
           <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 user-dropdown-menu" aria-labelledby="userMenuDropdown">
             <li class="px-3 py-2 border-bottom user-dropdown-header">
