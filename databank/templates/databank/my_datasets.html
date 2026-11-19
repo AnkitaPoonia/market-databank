@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% block title %}My Datasets Repository | Market Databank PRO{% endblock %}
+
+{% block content %}
+<!-- Executive Header -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1 text-dark">My Datasets Repository</h1>
+    <p class="text-muted small mb-0">Manage, edit, export, and share all market intelligence records authored by your account.</p>
+  </div>
+  <a href="{% url 'databank:create' %}" class="btn btn-primary-custom btn-sm d-inline-flex align-items-center gap-1 shadow-sm">
+    <i class="bi bi-plus-lg"></i>
+    <span>Create New Dataset</span>
+  </a>
+</div>
+
+<!-- Search & Filter Card -->
+<div class="card card-premium p-3 mb-4">
+  <form method="get" action="{% url 'databank:my_datasets' %}" class="row g-2 align-items-center">
+    <!-- Search Query -->
+    <div class="col-lg-4 col-md-6">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-search"></i></span>
+        <input type="text" name="q" class="form-control border-start-0" placeholder="Search by title, company, product..." value="{{ selected_query }}" aria-label="Search my datasets">
+      </div>
+    </div>
+
+    <!-- Category Dropdown -->
+    <div class="col-lg-3 col-md-6">
+      <select name="category" class="form-select form-select-sm" aria-label="Filter by Sector">
+        <option value="">All Sectors / Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Demand Dropdown -->
+    <div class="col-lg-2 col-md-4">
+      <select name="demand" class="form-select form-select-sm" aria-label="Filter by Demand">
+        <option value="">All Demand Levels</option>
+        <option value="High" {% if selected_demand == 'High' %}selected{% endif %}>High Demand</option>
+        <option value="Medium" {% if selected_demand == 'Medium' %}selected{% endif %}>Medium Demand</option>
+        <option value="Low" {% if selected_demand == 'Low' %}selected{% endif %}>Low Demand</option>
+      </select>
+    </div>
+
+    <!-- Visibility Dropdown -->
+    <div class="col-lg-2 col-md-4">
+      <select name="visibility" class="form-select form-select-sm" aria-label="Filter by Visibility">
+        <option value="">All Visibility</option>
+        <option value="Public" {% if selected_visibility == 'Public' %}selected{% endif %}>Public</option>
+        <option value="Private" {% if selected_visibility == 'Private' %}selected{% endif %}>Private</option>
+      </select>
+    </div>
+
+    <!-- Submit & Clear Buttons -->
+    <div class="col-lg-1 col-md-4 d-flex gap-1">
+      <button type="submit" class="btn btn-primary-custom btn-sm w-100" title="Apply Filters" aria-label="Apply Filters">
+        <i class="bi bi-funnel"></i>
+      </button>
+      {% if selected_query or selected_category or selected_demand or selected_visibility %}
+        <a href="{% url 'databank:my_datasets' %}" class="btn btn-outline-secondary btn-sm" title="Clear Filters" aria-label="Clear Filters">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Datasets Table Container -->
+<div class="card card-premium overflow-hidden mb-4">
+  <div class="card-header card-header-clean d-flex align-items-center justify-content-between">
+    <div>
+      <span class="fw-bold text-dark"><i class="bi bi-folder2-open me-2 text-primary"></i>Owned Repositories</span>
+      <span class="badge bg-light text-muted border ms-2">{{ total_count }} record{{ total_count|pluralize }}</span>
+    </div>
+  </div>
+
+  {% if page_obj %}
+    <div class="table-responsive">
+      <table class="table table-premium align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Dataset Title</th>
+            <th>Company Name</th>
+            <th>Sector</th>
+            <th>Benchmark Price</th>
+            <th>Demand</th>
+            <th>Created Date</th>
+            <th>Visibility</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in page_obj %}
+          <tr>
+            <!-- Title & Product/Service Subtitle -->
+            <td>
+              <a href="{% url 'databank:detail' d.pk %}" class="fw-bold text-dark text-decoration-none text-truncate d-block" style="max-width: 240px;" title="{{ d.title }}">
+                {{ d.title }}
+              </a>
+              <div class="text-muted small text-truncate" style="max-width: 240px; font-size: 0.76rem;" title="{{ d.product_service }}">
+                {{ d.product_service }}
+              </div>
+            </td>
+
+            <!-- Company Name -->
+            <td class="fw-semibold text-secondary">{{ d.company_name }}</td>
+
+            <!-- Sector Badge -->
+            <td><span class="badge bg-light text-dark border">{{ d.category.name }}</span></td>
+
+            <!-- Benchmark Price -->
+            <td class="fw-bold text-dark">₹ {{ d.market_price|floatformat:2 }}</td>
+
+            <!-- Demand Badge -->
+            <td>
+              {% if d.market_demand == 'High' %}
+                <span class="badge-demand-high">High</span>
+              {% elif d.market_demand == 'Medium' %}
+                <span class="badge-demand-medium">Medium</span>
+              {% else %}
+                <span class="badge-demand-low">Low</span>
+              {% endif %}
+            </td>
+
+            <!-- Date Created -->
+            <td class="text-muted small">{{ d.created_at|date:"M d, Y" }}</td>
+
+            <!-- Visibility Badge -->
+            <td>
+              {% if d.visibility == 'Public' %}
+                <span class="badge-vis-public"><i class="bi bi-globe me-1"></i>Public</span>
+              {% else %}
+                <span class="badge-vis-private"><i class="bi bi-lock me-1"></i>Private</span>
+              {% endif %}
+            </td>
+
+            <!-- Consolidated Action Menu -->
+            <td class="text-end pe-3">
+              <div class="d-inline-flex align-items-center gap-1">
+                <!-- Primary Action: View -->
+                <a href="{% url 'databank:detail' d.pk %}" class="btn btn-sm btn-outline-custom px-2 py-1 text-primary d-inline-flex align-items-center gap-1" title="View details" aria-label="View dataset details">
+                  <i class="bi bi-eye"></i>
+                  <span class="d-none d-xl-inline">View</span>
+                </a>
+
+                <!-- Secondary Actions: Dropdown Menu -->
+                <div class="dropdown d-inline-block">
+                  <button class="btn btn-sm btn-outline-custom px-2 py-1 dropdown-toggle dropdown-toggle-no-caret" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More options" aria-label="More options">
+                    <i class="bi bi-three-dots"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="min-width: 180px;">
+                    <li>
+                      <a class="dropdown-item py-2" href="{% url 'databank:detail' d.pk %}">
+                        <i class="bi bi-eye me-2 text-primary"></i> View Details
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item py-2" href="{% url 'databank:edit' d.pk %}">
+                        <i class="bi bi-pencil me-2 text-primary"></i> Edit Dataset
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item py-2" href="{% url 'sharing:share_dataset' d.pk %}">
+                        <i class="bi bi-share me-2 text-success"></i> Share Dataset
+                      </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <a class="dropdown-item py-2" href="{% url 'databank:export_csv' d.pk %}">
+                        <i class="bi bi-filetype-csv me-2 text-success"></i> Download CSV
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item py-2" href="{% url 'databank:export_pdf' d.pk %}">
+                        <i class="bi bi-filetype-pdf me-2 text-danger"></i> Download PDF
+                      </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <!-- Links to safe GET confirmation view -->
+                      <a class="dropdown-item py-2 text-danger" href="{% url 'databank:delete' d.pk %}">
+                        <i class="bi bi-trash3 me-2 text-danger"></i> Delete Dataset
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Bar -->
+    {% if page_obj.has_other_pages %}
+    <div class="p-3 border-top d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <small class="text-muted">
+        Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ total_count }} total datasets)
+      </small>
+      <nav aria-label="Page navigation">
+        <ul class="pagination pagination-sm mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ selected_query }}&category={{ selected_category }}&demand={{ selected_demand }}&visibility={{ selected_visibility }}">Previous</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ num }}&q={{ selected_query }}&category={{ selected_category }}&demand={{ selected_demand }}&visibility={{ selected_visibility }}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ selected_query }}&category={{ selected_category }}&demand={{ selected_demand }}&visibility={{ selected_visibility }}">Next</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state py-5">
+      <div class="empty-state-icon"><i class="bi bi-folder-plus"></i></div>
+      <h5 class="fw-bold text-dark">No Datasets Found</h5>
+      {% if selected_query or selected_category or selected_demand or selected_visibility %}
+        <p class="text-muted small mb-3">No personal datasets match your active filter criteria. Try adjusting or clearing your filters.</p>
+        <a href="{% url 'databank:my_datasets' %}" class="btn btn-outline-custom btn-sm">
+          <i class="bi bi-arrow-clockwise me-1"></i> Clear Filter Criteria
+        </a>
+      {% else %}
+        <p class="text-muted small mb-3">Start building your personal research databank by authoring your first market dataset record.</p>
+        <a href="{% url 'databank:create' %}" class="btn btn-primary-custom btn-sm">
+          <i class="bi bi-plus-lg me-1"></i> Create Your First Dataset
+        </a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

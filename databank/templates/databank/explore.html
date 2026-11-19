@@ -1,0 +1,365 @@
+{% extends 'base.html' %}
+
+{% block title %}Explore Market Databank | Market Databank PRO{% endblock %}
+
+{% block content %}
+<!-- Executive Header -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1 text-dark">Explore Market Databank</h1>
+    <p class="text-muted small mb-0">Browse verified market research datasets across industries, competitors, and valuation metrics.</p>
+  </div>
+  {% if user.is_authenticated %}
+  <a href="{% url 'databank:create' %}" class="btn btn-primary-custom btn-sm d-inline-flex align-items-center gap-1 shadow-sm">
+    <i class="bi bi-plus-lg"></i>
+    <span>Contribute Dataset</span>
+  </a>
+  {% endif %}
+</div>
+
+<!-- Search, Filter & Sort Controls Card -->
+<div class="card card-premium p-3 mb-3">
+  <form method="get" action="{% url 'databank:explore' %}" class="row g-2 align-items-center">
+    <!-- Search Query Input -->
+    <div class="col-lg-4 col-md-6">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light text-muted border-end-0">
+          <i class="bi bi-search"></i>
+        </span>
+        <input type="text" name="q" class="form-control border-start-0" placeholder="Search datasets, companies, products..." value="{{ selected_query }}" aria-label="Search datasets">
+      </div>
+    </div>
+
+    <!-- Category Dropdown -->
+    <div class="col-lg-3 col-md-6">
+      <select name="category" class="form-select form-select-sm" aria-label="Filter by Sector">
+        <option value="">All Sectors / Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Demand Dropdown -->
+    <div class="col-lg-2 col-md-4">
+      <select name="demand" class="form-select form-select-sm" aria-label="Filter by Demand">
+        <option value="">All Demand Levels</option>
+        <option value="High" {% if selected_demand == 'High' %}selected{% endif %}>High Demand</option>
+        <option value="Medium" {% if selected_demand == 'Medium' %}selected{% endif %}>Medium Demand</option>
+        <option value="Low" {% if selected_demand == 'Low' %}selected{% endif %}>Low Demand</option>
+      </select>
+    </div>
+
+    <!-- Sorting Dropdown -->
+    <div class="col-lg-2 col-md-4">
+      <select name="sort" class="form-select form-select-sm" aria-label="Sort datasets">
+        <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest First</option>
+        <option value="oldest" {% if selected_sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+        <option value="price_low" {% if selected_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+        <option value="price_high" {% if selected_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+        <option value="title" {% if selected_sort == 'title' %}selected{% endif %}>Alphabetical (Title)</option>
+      </select>
+    </div>
+
+    <!-- Submit & Clear Actions -->
+    <div class="col-lg-1 col-md-4 d-flex gap-1">
+      <button type="submit" class="btn btn-primary-custom btn-sm w-100" title="Apply Filters" aria-label="Apply Filters">
+        <i class="bi bi-funnel"></i>
+      </button>
+      {% if selected_query or selected_category or selected_demand or selected_sort != 'newest' %}
+        <a href="{% url 'databank:explore' %}" class="btn btn-outline-secondary btn-sm" title="Clear Filters" aria-label="Clear Filters">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Active Filter Pills Row (When Filters Are Applied) -->
+{% if selected_query or selected_category or selected_demand or selected_sort and selected_sort != 'newest' %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3 px-1">
+  <span class="small fw-semibold text-muted me-1" style="font-size: 0.78rem;">Active Filters:</span>
+  
+  {% if selected_query %}
+    <span class="filter-pill">
+      <span>Query: "{{ selected_query }}"</span>
+      <a href="?category={{ selected_category }}&demand={{ selected_demand }}&sort={{ selected_sort }}" class="filter-pill-close" title="Remove query filter">&times;</a>
+    </span>
+  {% endif %}
+
+  {% if selected_category %}
+    {% for cat in categories %}
+      {% if selected_category == cat.id|stringformat:"s" %}
+        <span class="filter-pill">
+          <span>Sector: {{ cat.name }}</span>
+          <a href="?q={{ selected_query }}&demand={{ selected_demand }}&sort={{ selected_sort }}" class="filter-pill-close" title="Remove category filter">&times;</a>
+        </span>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% if selected_demand %}
+    <span class="filter-pill">
+      <span>Demand: {{ selected_demand }}</span>
+      <a href="?q={{ selected_query }}&category={{ selected_category }}&sort={{ selected_sort }}" class="filter-pill-close" title="Remove demand filter">&times;</a>
+    </span>
+  {% endif %}
+
+  {% if selected_sort and selected_sort != 'newest' %}
+    <span class="filter-pill">
+      <span>Sort: {{ selected_sort }}</span>
+      <a href="?q={{ selected_query }}&category={{ selected_category }}&demand={{ selected_demand }}" class="filter-pill-close" title="Reset sort">&times;</a>
+    </span>
+  {% endif %}
+
+  <a href="{% url 'databank:explore' %}" class="small text-danger text-decoration-none fw-semibold ms-2" style="font-size: 0.78rem;">
+    Reset All Filters
+  </a>
+</div>
+{% endif %}
+
+<!-- Results Header with Grid / Table View Toggle -->
+<div class="d-flex align-items-center justify-content-between mb-3 px-1">
+  <div class="small text-muted fw-medium">
+    Showing <span class="fw-bold text-dark">{{ page_obj.paginator.count }}</span> verified market dataset{{ page_obj.paginator.count|pluralize }}
+  </div>
+
+  <!-- Functional Grid / Table Toggle -->
+  <div class="d-flex align-items-center gap-2">
+    <span class="small text-muted d-none d-sm-inline" style="font-size: 0.78rem;">View:</span>
+    <div class="btn-group btn-group-sm" role="group" aria-label="View toggle">
+      <button type="button" class="btn btn-outline-secondary active" id="viewToggleGrid" data-view="grid" title="Card Grid View" aria-label="Card Grid View">
+        <i class="bi bi-grid-fill"></i>
+      </button>
+      <button type="button" class="btn btn-outline-secondary" id="viewToggleTable" data-view="table" title="Table View" aria-label="Table View">
+        <i class="bi bi-table"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+{% if page_obj %}
+  <!-- 1. GRID VIEW CONTAINER -->
+  <div id="exploreGridView">
+    <div class="row g-4 mb-4">
+      {% for d in page_obj %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card card-premium h-100 d-flex flex-column">
+          <!-- Card Header Badges -->
+          <div class="p-3 border-bottom d-flex align-items-center justify-content-between bg-white">
+            <span class="badge bg-light text-dark border">{{ d.category.name }}</span>
+            <div>
+              {% if d.market_demand == 'High' %}
+                <span class="badge-demand-high">High Demand</span>
+              {% elif d.market_demand == 'Medium' %}
+                <span class="badge-demand-medium">Medium Demand</span>
+              {% else %}
+                <span class="badge-demand-low">Low Demand</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Card Body Content -->
+          <div class="p-4 flex-grow-1 bg-white">
+            <div class="text-muted small mb-1 d-flex align-items-center gap-1" title="{{ d.company_name }}">
+              <i class="bi bi-buildings text-primary"></i>
+              <span class="text-truncate fw-medium">{{ d.company_name }}</span>
+            </div>
+            
+            <h5 class="fw-bold mb-2">
+              <a href="{% url 'databank:detail' d.pk %}" class="text-dark text-decoration-none" title="{{ d.title }}">
+                {{ d.title }}
+              </a>
+            </h5>
+
+            <!-- 2-Line Truncated Description -->
+            <p class="text-muted small mb-3 text-truncate-2" title="{{ d.description }}">
+              {{ d.description }}
+            </p>
+
+            <!-- Financial Metrics Block -->
+            <div class="bg-light p-2 rounded mb-3 small d-flex justify-content-between align-items-center border border-light-subtle">
+              <div>
+                <span class="text-muted d-block" style="font-size: 0.72rem;">Benchmark Price</span>
+                <span class="fw-bold text-dark">₹ {{ d.market_price|floatformat:2 }}</span>
+              </div>
+              {% if d.market_growth_rate %}
+              <div class="text-end">
+                <span class="text-muted d-block" style="font-size: 0.72rem;">CAGR</span>
+                <span class="badge bg-success-subtle text-success fw-bold">{{ d.market_growth_rate }}%</span>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Provenance & Attribution Footer -->
+            <div class="d-flex justify-content-between align-items-center text-muted small pt-2 border-top" style="font-size: 0.75rem;">
+              <span><i class="bi bi-person me-1"></i>{{ d.created_by.username }}</span>
+              <span><i class="bi bi-calendar3 me-1"></i>{{ d.created_at|date:"M d, Y" }}</span>
+            </div>
+          </div>
+
+          <!-- Card Action Footer -->
+          <div class="p-3 bg-light border-top d-flex justify-content-between align-items-center">
+            <div>
+              {% if d.visibility == 'Public' %}
+                <span class="badge-vis-public small"><i class="bi bi-globe me-1"></i>Public</span>
+              {% else %}
+                <span class="badge-vis-private small"><i class="bi bi-lock me-1"></i>Shared</span>
+              {% endif %}
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              {% if user.is_authenticated and d.created_by == user %}
+                <a href="{% url 'sharing:share_dataset' d.pk %}" class="btn btn-sm btn-outline-custom" title="Share Dataset" aria-label="Share dataset">
+                  <i class="bi bi-share text-primary"></i>
+                </a>
+              {% endif %}
+              <a href="{% url 'databank:detail' d.pk %}" class="btn btn-sm btn-primary-custom d-inline-flex align-items-center gap-1">
+                <span>View Details</span>
+                <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 2. TABLE VIEW CONTAINER (Toggled via JS) -->
+  <div id="exploreTableView" class="d-none mb-4">
+    <div class="card card-premium overflow-hidden">
+      <div class="table-responsive">
+        <table class="table table-premium align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Dataset Title</th>
+              <th>Company</th>
+              <th>Sector</th>
+              <th>Benchmark Price</th>
+              <th>Growth Rate</th>
+              <th>Demand</th>
+              <th>Visibility</th>
+              <th class="text-end pe-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in page_obj %}
+            <tr>
+              <td>
+                <a href="{% url 'databank:detail' d.pk %}" class="fw-bold text-dark text-truncate d-block text-decoration-none" style="max-width: 220px;" title="{{ d.title }}">
+                  {{ d.title }}
+                </a>
+                <small class="text-muted text-truncate d-block" style="max-width: 220px;">{{ d.product_service }}</small>
+              </td>
+              <td class="fw-semibold text-secondary">{{ d.company_name }}</td>
+              <td><span class="badge bg-light text-dark border">{{ d.category.name }}</span></td>
+              <td class="fw-bold text-dark">₹ {{ d.market_price|floatformat:2 }}</td>
+              <td>
+                {% if d.market_growth_rate %}
+                  <span class="text-success fw-semibold">{{ d.market_growth_rate }}%</span>
+                {% else %}
+                  <span class="text-muted small">&mdash;</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if d.market_demand == 'High' %}
+                  <span class="badge-demand-high">High</span>
+                {% elif d.market_demand == 'Medium' %}
+                  <span class="badge-demand-medium">Medium</span>
+                {% else %}
+                  <span class="badge-demand-low">Low</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if d.visibility == 'Public' %}
+                  <span class="badge-vis-public"><i class="bi bi-globe me-1"></i>Public</span>
+                {% else %}
+                  <span class="badge-vis-private"><i class="bi bi-lock me-1"></i>Shared</span>
+                {% endif %}
+              </td>
+              <td class="text-end pe-3">
+                <div class="d-inline-flex align-items-center gap-1">
+                  <a href="{% url 'databank:detail' d.pk %}" class="btn btn-outline-custom table-action-btn" title="View details" aria-label="View dataset details">
+                    <i class="bi bi-eye text-primary"></i>
+                  </a>
+                  {% if user.is_authenticated and d.created_by == user %}
+                    <a href="{% url 'sharing:share_dataset' d.pk %}" class="btn btn-outline-custom table-action-btn" title="Share dataset" aria-label="Share dataset">
+                      <i class="bi bi-share text-primary"></i>
+                    </a>
+                  {% endif %}
+                  <a href="{% url 'databank:export_csv' d.pk %}" class="btn btn-outline-custom table-action-btn" title="Download CSV" aria-label="Download CSV">
+                    <i class="bi bi-filetype-csv text-success"></i>
+                  </a>
+                  <a href="{% url 'databank:export_pdf' d.pk %}" class="btn btn-outline-custom table-action-btn" title="Download PDF Report" aria-label="Download PDF">
+                    <i class="bi bi-filetype-pdf text-danger"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination Bar -->
+  {% if page_obj.has_other_pages %}
+  <div class="card card-premium p-3 mb-4 d-flex flex-row justify-content-between align-items-center">
+    <small class="text-muted">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} datasets)
+    </small>
+    <nav aria-label="Page navigation">
+      <ul class="pagination pagination-sm mb-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ selected_query }}&category={{ selected_category }}&demand={{ selected_demand }}&sort={{ selected_sort }}">Previous</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}&q={{ selected_query }}&category={{ selected_category }}&demand={{ selected_demand }}&sort={{ selected_sort }}">{{ num }}</a></li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ selected_query }}&category={{ selected_category }}&demand={{ selected_demand }}&sort={{ selected_sort }}">Next</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+{% else %}
+  <!-- Empty State -->
+  <div class="card card-premium py-5 text-center my-4">
+    <div class="empty-state">
+      <div class="empty-state-icon"><i class="bi bi-search"></i></div>
+      <h4 class="fw-bold text-dark">No Market Datasets Found</h4>
+      <p class="text-muted small mb-3" style="max-width: 480px; margin: 0 auto;">
+        No datasets matched your current search parameters or filter criteria. Try adjusting your query or resetting filters.
+      </p>
+      {% if selected_query or selected_category or selected_demand or selected_sort != 'newest' %}
+        <a href="{% url 'databank:explore' %}" class="btn btn-outline-custom btn-sm">
+          <i class="bi bi-arrow-clockwise me-1"></i> Reset All Filters
+        </a>
+      {% else %}
+        {% if user.is_authenticated %}
+        <a href="{% url 'databank:create' %}" class="btn btn-primary-custom btn-sm">
+          <i class="bi bi-plus-lg me-1"></i> Contribute Initial Dataset
+        </a>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

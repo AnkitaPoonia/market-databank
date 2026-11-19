@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block title %}Share {{ dataset.title }} | Market Databank{% endblock %}
+
+{% block content %}
+<!-- Top Header Banner -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{% url 'databank:detail' dataset.pk %}" class="btn btn-outline-secondary btn-sm" title="Back to Dataset Details">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+        <span class="badge bg-light text-dark border"><i class="bi bi-tag me-1 text-primary"></i>{{ dataset.category.name }}</span>
+        {% if dataset.visibility == 'Public' %}
+          <span class="badge-vis-public"><i class="bi bi-globe me-1"></i>Public Dataset</span>
+        {% else %}
+          <span class="badge-vis-private"><i class="bi bi-lock me-1"></i>Private Dataset</span>
+        {% endif %}
+      </div>
+      <h1 class="h3 fw-bold mb-0 text-dark">Share Dataset Access</h1>
+      <small class="text-muted">Grant collaborative Viewer or Editor permissions for <strong>{{ dataset.title }}</strong> ({{ dataset.company_name }}).</small>
+    </div>
+  </div>
+  <a href="{% url 'databank:detail' dataset.pk %}" class="btn btn-outline-custom btn-sm">
+    <i class="bi bi-eye me-1"></i> View Dataset Details
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Left Column: Share Invitation Form -->
+  <div class="col-lg-7">
+    <div class="card card-premium p-4 p-md-5">
+      <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+        <div class="p-3 bg-success-subtle text-success rounded-3 fs-3">
+          <i class="bi bi-share-fill"></i>
+        </div>
+        <div>
+          <h5 class="fw-bold mb-1 text-dark">Invite Team Collaborator</h5>
+          <p class="text-muted small mb-0">Authorized users receive instant access to this repository based on assigned permissions.</p>
+        </div>
+      </div>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 small mb-4">
+            {% for error in form.non_field_errors %}
+              <div><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Pre-selected Dataset Reference -->
+        <div class="mb-4">
+          <label class="form-label fw-semibold small text-muted">Target Dataset (Automatically Selected)</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-primary border-end-0"><i class="bi bi-database-check"></i></span>
+            <input type="text" class="form-control bg-light border-start-0 fw-semibold text-dark" value="{{ dataset.title }} — {{ dataset.company_name }}" readonly disabled>
+          </div>
+          <div class="form-text small text-muted">You are sharing as the verified owner (<strong>{{ request.user.username }}</strong>).</div>
+        </div>
+
+        <!-- Recipient Username or Email -->
+        <div class="mb-4">
+          <label for="{{ form.recipient_identifier.id_for_label }}" class="form-label fw-bold small text-dark">
+            Recipient Username or Email <span class="text-danger">*</span>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person-plus"></i></span>
+            {{ form.recipient_identifier }}
+          </div>
+          {% if form.recipient_identifier.errors %}
+            <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ form.recipient_identifier.errors.0 }}</div>
+          {% endif %}
+          <div class="form-text small text-muted">{{ form.recipient_identifier.help_text }}</div>
+        </div>
+
+        <!-- Role-Based Permission Selection (Radio Cards) -->
+        <div class="mb-4">
+          <label class="form-label fw-bold small text-dark mb-2">
+            Select Access Permission Level <span class="text-danger">*</span>
+          </label>
+
+          <div class="row g-3">
+            <!-- Viewer Radio Card -->
+            <div class="col-sm-6">
+              <label class="permission-card w-100 h-100 {% if form.permission.value == 'Viewer' or not form.permission.value %}selected{% endif %}" for="permViewer">
+                <input type="radio" name="permission" value="Viewer" id="permViewer" class="form-check-input mt-1" {% if form.permission.value == 'Viewer' or not form.permission.value %}checked{% endif %}>
+                <div>
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="bi bi-eye text-primary fs-5"></i>
+                    <span class="fw-bold text-dark">Viewer</span>
+                  </div>
+                  <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.5;">
+                    Read-only access. Can inspect economic metrics, read observations, and export sanitized CSV & PDF reports.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <!-- Editor Radio Card -->
+            <div class="col-sm-6">
+              <label class="permission-card w-100 h-100 {% if form.permission.value == 'Editor' %}selected{% endif %}" for="permEditor">
+                <input type="radio" name="permission" value="Editor" id="permEditor" class="form-check-input mt-1" {% if form.permission.value == 'Editor' %}checked{% endif %}>
+                <div>
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="bi bi-pencil-square text-warning-emphasis fs-5"></i>
+                    <span class="fw-bold text-dark">Editor</span>
+                  </div>
+                  <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.5;">
+                    Collaborative access. Can view, export, and modify valuation, market demand, addressable size, and description.
+                  </p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {% if form.permission.errors %}
+            <div class="text-danger small mt-2"><i class="bi bi-exclamation-circle me-1"></i>{{ form.permission.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Optional Invitation Note / Message -->
+        <div class="mb-4">
+          <label for="{{ form.message.id_for_label }}" class="form-label fw-bold small text-dark">
+            Invitation Message / Briefing Note <span class="text-muted fw-normal">(Optional)</span>
+          </label>
+          {{ form.message }}
+          {% if form.message.errors %}
+            <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ form.message.errors.0 }}</div>
+          {% endif %}
+          <div class="form-text small text-muted">Provide instructions, purpose of analysis, or context for your collaborator.</div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+          <a href="{% url 'databank:detail' dataset.pk %}" class="btn btn-outline-custom">Cancel</a>
+          <button type="submit" class="btn btn-success px-4 shadow-xs">
+            <i class="bi bi-share-fill me-1"></i> Grant Sharing Access
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Right Column: Current Collaborators & RBAC Governance -->
+  <div class="col-lg-5">
+    <!-- Active Collaborators Management Card -->
+    <div class="card card-premium p-4 mb-4">
+      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+        <div>
+          <h6 class="fw-bold mb-0 text-primary d-flex align-items-center gap-2">
+            <i class="bi bi-people-fill"></i> Current Collaborators ({{ existing_shares.count }})
+          </h6>
+          <small class="text-muted">Users with active access to this dataset.</small>
+        </div>
+        <span class="badge bg-light text-muted border">Live Access</span>
+      </div>
+
+      {% if existing_shares %}
+        <div class="list-group list-group-flush small">
+          {% for s in existing_shares %}
+            <div class="list-group-item px-0 py-3 border-bottom">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-weight: 700; font-size: 0.85rem;">
+                    {{ s.shared_with.username|first|upper }}
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark">{{ s.shared_with.username }}</div>
+                    {% if s.shared_with.email %}
+                      <div class="text-muted small" style="font-size: 0.75rem;">{{ s.shared_with.email }}</div>
+                    {% endif %}
+                    <div class="text-muted" style="font-size: 0.72rem;">Shared on {{ s.shared_at|date:"M d, Y" }}</div>
+                  </div>
+                </div>
+
+                <span class="badge {% if s.permission == 'Editor' %}badge-perm-editor{% else %}badge-perm-viewer{% endif %}">
+                  {{ s.permission }}
+                </span>
+              </div>
+
+              {% if s.message %}
+                <div class="bg-light p-2 rounded text-muted small fst-italic mb-2" style="font-size: 0.8rem;">
+                  "{{ s.message }}"
+                </div>
+              {% endif %}
+
+              <!-- Collaborator Action Controls: Change Permission & Revoke -->
+              <div class="d-flex align-items-center justify-content-between gap-2 pt-1">
+                <!-- Change Permission Form -->
+                <form action="{% url 'sharing:update_share' s.pk %}" method="post" class="d-flex align-items-center gap-1">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.path }}">
+                  <select name="permission" class="form-select form-select-sm py-1 px-2" style="font-size: 0.78rem; width: auto;">
+                    <option value="Viewer" {% if s.permission == 'Viewer' %}selected{% endif %}>Viewer</option>
+                    <option value="Editor" {% if s.permission == 'Editor' %}selected{% endif %}>Editor</option>
+                  </select>
+                  <button type="submit" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size: 0.78rem;" title="Change permission level">
+                    Update
+                  </button>
+                </form>
+
+                <!-- Revoke Form -->
+                <form action="{% url 'sharing:revoke_share' s.pk %}" method="post" onsubmit="return confirm('Revoke sharing access for {{ s.shared_with.username }}?');">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.path }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" style="font-size: 0.78rem;" title="Revoke access completely">
+                    <i class="bi bi-x-circle me-1"></i> Revoke
+                  </button>
+                </form>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state py-4 text-center">
+          <div class="empty-state-icon" style="width: 48px; height: 48px; font-size: 1.25rem;">
+            <i class="bi bi-people"></i>
+          </div>
+          <h6 class="fw-bold mb-1">No Active Collaborators</h6>
+          <p class="text-muted small mb-0">Use the form on the left to invite colleagues by their registered username or email address.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Governance & Access Rights Reference Card -->
+    <div class="card card-premium p-4">
+      <h6 class="fw-bold mb-3 d-flex align-items-center gap-2 text-dark">
+        <i class="bi bi-shield-lock text-primary"></i> RBAC Access Rights Summary
+      </h6>
+      <ul class="list-group list-group-flush small">
+        <li class="list-group-item px-0 py-2 border-bottom">
+          <strong class="text-dark d-block mb-1"><i class="bi bi-person-fill-check text-primary me-1"></i>Owner (You):</strong>
+          <span class="text-muted">Retains exclusive administrative ownership. Can edit all metrics, delete the record, invite collaborators, adjust permission levels, or revoke access at any time.</span>
+        </li>
+        <li class="list-group-item px-0 py-2 border-bottom">
+          <strong class="text-dark d-block mb-1"><i class="bi bi-pencil-square text-warning-emphasis me-1"></i>Editor:</strong>
+          <span class="text-muted">Authorized to view details, download sanitized CSV/PDF exports, and update pricing, demand, addressable size, growth rate, and findings. Cannot delete or re-share.</span>
+        </li>
+        <li class="list-group-item px-0 py-2">
+          <strong class="text-dark d-block mb-1"><i class="bi bi-eye text-info me-1"></i>Viewer:</strong>
+          <span class="text-muted">Authorized to inspect dataset metrics, read qualitative analysis, and download CSV & PDF exports. Cannot modify any records or invite others.</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

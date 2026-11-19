@@ -1,0 +1,460 @@
+{% extends 'base.html' %}
+
+{% block title %}Executive Dashboard | Market Databank PRO{% endblock %}
+
+{% block content %}
+<!-- Dashboard Executive Header -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1 text-dark">
+      Welcome back, {{ user.first_name|default:user.username }}!
+    </h1>
+    <p class="text-muted small mb-0">
+      Real-time executive overview of your market databank repositories, sector coverage, and research collaborations.
+    </p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'databank:create' %}" class="btn btn-primary-custom btn-sm d-inline-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-plus-lg"></i>
+      <span>Generate Dataset</span>
+    </a>
+    <a href="{% url 'databank:explore' %}" class="btn btn-outline-custom btn-sm d-inline-flex align-items-center gap-1">
+      <i class="bi bi-compass"></i>
+      <span>Explore Repository</span>
+    </a>
+  </div>
+</div>
+
+<!-- Database Metrics Cards Grid -->
+<div class="row g-3 mb-4">
+  <!-- Card 1: My Datasets -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="stat-label">My Datasets</span>
+        <div class="stat-icon bg-primary-subtle text-primary">
+          <i class="bi bi-folder-check"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ my_datasets_count }}</div>
+      <div class="small text-muted mt-2 d-flex align-items-center gap-1">
+        <i class="bi bi-person-fill text-primary"></i>
+        <span>Authored by your account</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: Shared With Me -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="stat-label">Shared With Me</span>
+        <div class="stat-icon bg-success-subtle text-success">
+          <i class="bi bi-share-fill"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ shared_with_me_count }}</div>
+      <div class="small text-muted mt-2 d-flex align-items-center gap-1">
+        <i class="bi bi-shield-check text-success"></i>
+        <span>Collaborative access</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3: Public Datasets -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="stat-label">Public Repository</span>
+        <div class="stat-icon bg-info-subtle text-info">
+          <i class="bi bi-globe2"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_public_count }}</div>
+      <div class="small text-muted mt-2 d-flex align-items-center gap-1">
+        <i class="bi bi-eye text-info"></i>
+        <span>Platform-wide open records</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 4: Categories -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="stat-label">Market Sectors</span>
+        <div class="stat-icon bg-warning-subtle text-warning">
+          <i class="bi bi-tags-fill"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_categories_count }}</div>
+      <div class="small text-muted mt-2 d-flex align-items-center gap-1">
+        <i class="bi bi-diagram-3 text-warning"></i>
+        <span>Active industry taxonomies</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+  <!-- Chart 1: Datasets by Sector -->
+  <div class="col-lg-7">
+    <div class="card card-premium h-100">
+      <div class="card-header card-header-clean d-flex align-items-center justify-content-between">
+        <div>
+          <span class="fw-bold text-dark"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>My Datasets by Sector</span>
+          <div class="text-muted small" style="font-size: 0.75rem;">Distribution across industry sectors</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-light text-muted border">Live DB</span>
+          {% if my_datasets_count > 0 %}
+          <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.72rem;" onclick="downloadChartImage('categoryChart', 'my-datasets-by-sector.png')" title="Export Chart as PNG" aria-label="Export Sector Chart as PNG">
+            <i class="bi bi-download me-1"></i>PNG
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-body p-4">
+        {% if my_datasets_count > 0 %}
+          <div class="chart-wrapper">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        {% else %}
+          <div class="empty-state py-4">
+            <div class="empty-state-icon"><i class="bi bi-bar-chart"></i></div>
+            <h6 class="fw-bold text-dark">No Category Distribution Yet</h6>
+            <p class="text-muted small mb-3">Author your first market dataset to see live visual categorization across sectors.</p>
+            <a href="{% url 'databank:create' %}" class="btn btn-sm btn-primary-custom">
+              <i class="bi bi-plus-lg me-1"></i> Create Dataset
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 2: Market Demand Distribution -->
+  <div class="col-lg-5">
+    <div class="card card-premium h-100">
+      <div class="card-header card-header-clean d-flex align-items-center justify-content-between">
+        <div>
+          <span class="fw-bold text-dark"><i class="bi bi-pie-chart-fill me-2 text-primary"></i>Market Demand Trajectory</span>
+          <div class="text-muted small" style="font-size: 0.75rem;">High vs Medium vs Low demand breakdown</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-light text-muted border">Live DB</span>
+          {% if my_datasets_count > 0 %}
+          <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.72rem;" onclick="downloadChartImage('demandChart', 'market-demand-distribution.png')" title="Export Chart as PNG" aria-label="Export Demand Chart as PNG">
+            <i class="bi bi-download me-1"></i>PNG
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-body p-4">
+        {% if my_datasets_count > 0 %}
+          <div class="chart-wrapper">
+            <canvas id="demandChart"></canvas>
+          </div>
+        {% else %}
+          <div class="empty-state py-4">
+            <div class="empty-state-icon"><i class="bi bi-pie-chart"></i></div>
+            <h6 class="fw-bold text-dark">No Demand Metrics</h6>
+            <p class="text-muted small mb-0">Demand indicators (Low, Medium, High) will render here once data is recorded.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Datasets and Activity Section -->
+<div class="row g-4">
+  <!-- Left Column: Recently Created Datasets Table -->
+  <div class="col-lg-8">
+    <div class="card card-premium h-100">
+      <div class="card-header card-header-clean d-flex align-items-center justify-content-between">
+        <div>
+          <span class="fw-bold text-dark"><i class="bi bi-clock-history me-2 text-primary"></i>Recently Created Datasets</span>
+          <div class="text-muted small" style="font-size: 0.75rem;">Latest market research records authored in your personal databank</div>
+        </div>
+        <a href="{% url 'databank:my_datasets' %}" class="small fw-semibold text-decoration-none">
+          View All <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+      <div class="card-body p-0">
+        {% if recent_datasets %}
+          <div class="table-responsive">
+            <table class="table table-premium align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Title & Company</th>
+                  <th>Sector</th>
+                  <th>Price</th>
+                  <th>Demand</th>
+                  <th>Visibility</th>
+                  <th class="text-end pe-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for d in recent_datasets %}
+                <tr>
+                  <!-- Title & Company with Graceful Truncation -->
+                  <td>
+                    <a href="{% url 'databank:detail' d.pk %}" class="fw-bold text-dark text-truncate d-block text-decoration-none" style="max-width: 200px;" title="{{ d.title }}">
+                      {{ d.title }}
+                    </a>
+                    <small class="text-muted text-truncate d-block" style="max-width: 200px;" title="{{ d.company_name }}">
+                      {{ d.company_name }}
+                    </small>
+                  </td>
+
+                  <!-- Sector Badge -->
+                  <td>
+                    <span class="badge bg-light text-dark border">{{ d.category.name }}</span>
+                  </td>
+
+                  <!-- Benchmark Price with Currency Symbol -->
+                  <td class="fw-semibold text-dark">
+                    ₹ {{ d.market_price|floatformat:2 }}
+                  </td>
+
+                  <!-- Demand Badge -->
+                  <td>
+                    {% if d.market_demand == 'High' %}
+                      <span class="badge-demand-high">High</span>
+                    {% elif d.market_demand == 'Medium' %}
+                      <span class="badge-demand-medium">Medium</span>
+                    {% else %}
+                      <span class="badge-demand-low">Low</span>
+                    {% endif %}
+                  </td>
+
+                  <!-- Visibility Badge -->
+                  <td>
+                    {% if d.visibility == 'Public' %}
+                      <span class="badge-vis-public"><i class="bi bi-globe me-1"></i>Public</span>
+                    {% else %}
+                      <span class="badge-vis-private"><i class="bi bi-lock me-1"></i>Private</span>
+                    {% endif %}
+                  </td>
+
+                  <!-- Quick Action Buttons -->
+                  <td class="text-end pe-3">
+                    <div class="d-inline-flex align-items-center gap-1">
+                      <a href="{% url 'databank:detail' d.pk %}" class="btn btn-outline-custom table-action-btn" title="View Details" aria-label="View dataset details">
+                        <i class="bi bi-eye text-primary"></i>
+                      </a>
+                      <a href="{% url 'sharing:share_dataset' d.pk %}" class="btn btn-outline-custom table-action-btn" title="Share Dataset" aria-label="Share dataset">
+                        <i class="bi bi-share text-primary"></i>
+                      </a>
+                      <a href="{% url 'databank:export_csv' d.pk %}" class="btn btn-outline-custom table-action-btn" title="Download Excel CSV" aria-label="Download CSV">
+                        <i class="bi bi-filetype-csv text-success"></i>
+                      </a>
+                      <a href="{% url 'databank:export_pdf' d.pk %}" class="btn btn-outline-custom table-action-btn" title="Download PDF Report" aria-label="Download PDF">
+                        <i class="bi bi-filetype-pdf text-danger"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state py-5">
+            <div class="empty-state-icon"><i class="bi bi-folder-plus"></i></div>
+            <h5 class="fw-bold text-dark">No Datasets Created Yet</h5>
+            <p class="text-muted small mb-3">Start your research repository by generating your first market dataset record.</p>
+            <a href="{% url 'databank:create' %}" class="btn btn-primary-custom btn-sm">
+              <i class="bi bi-plus-circle me-1"></i> Create Dataset Now
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Platform Activity Feed -->
+  <div class="col-lg-4">
+    <div class="card card-premium h-100">
+      <div class="card-header card-header-clean d-flex align-items-center justify-content-between">
+        <div>
+          <span class="fw-bold text-dark"><i class="bi bi-activity me-2 text-primary"></i>Audit Activity Feed</span>
+          <div class="text-muted small" style="font-size: 0.75rem;">Verified repository actions</div>
+        </div>
+        <span class="badge bg-light text-muted border">Audit Trail</span>
+      </div>
+      <div class="card-body p-3">
+        {% if recent_activities %}
+          <div class="activity-timeline">
+            {% for act in recent_activities %}
+            <div class="activity-item">
+              <!-- Contextual Icon Container based on Activity Type -->
+              {% if 'Created' in act.action %}
+                <div class="activity-icon-wrap text-success" title="Dataset Created">
+                  <i class="bi bi-plus-lg"></i>
+                </div>
+              {% elif 'Updated' in act.action %}
+                <div class="activity-icon-wrap text-primary" title="Dataset Updated">
+                  <i class="bi bi-pencil"></i>
+                </div>
+              {% elif 'Deleted' in act.action %}
+                <div class="activity-icon-wrap text-danger" title="Dataset Deleted">
+                  <i class="bi bi-trash"></i>
+                </div>
+              {% elif 'Shared' in act.action or 'Revoked' in act.action %}
+                <div class="activity-icon-wrap text-info" title="Collaboration Event">
+                  <i class="bi bi-share"></i>
+                </div>
+              {% elif 'Exported' in act.action or 'CSV' in act.action or 'PDF' in act.action %}
+                <div class="activity-icon-wrap text-warning" title="Data Export">
+                  <i class="bi bi-cloud-arrow-down"></i>
+                </div>
+              {% else %}
+                <div class="activity-icon-wrap text-secondary" title="System Activity">
+                  <i class="bi bi-clock-history"></i>
+                </div>
+              {% endif %}
+
+              <div class="overflow-hidden">
+                <div class="fw-semibold text-dark small">{{ act.action }}</div>
+                <div class="text-muted small text-truncate" style="font-size: 0.78rem;" title="{{ act.details|default:act.action }}">
+                  {{ act.details|default:act.action }}
+                </div>
+                <div class="d-flex align-items-center justify-content-between mt-1">
+                  <span class="text-secondary" style="font-size: 0.72rem;">
+                    <i class="bi bi-clock me-1"></i>{{ act.timestamp|timesince }} ago
+                  </span>
+                  {% if act.dataset %}
+                  <a href="{% url 'databank:detail' act.dataset.pk %}" class="small text-primary text-decoration-none fw-semibold" style="font-size: 0.72rem;">
+                    View Record &rarr;
+                  </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state py-4">
+            <div class="empty-state-icon"><i class="bi bi-clock"></i></div>
+            <h6 class="fw-bold text-dark">No Activity Logged Yet</h6>
+            <p class="text-muted small mb-0">Operations such as dataset creations, updates, shares, and exports will be tracked here.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if my_datasets_count > 0 %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // 1. Sector Bar Chart with Financial Styling
+    const catLabels = {{ cat_labels_json|safe }};
+    const catValues = {{ cat_values_json|safe }};
+
+    if (catLabels && catLabels.length > 0) {
+      const ctxCat = document.getElementById('categoryChart').getContext('2d');
+      new Chart(ctxCat, {
+        type: 'bar',
+        data: {
+          labels: catLabels,
+          datasets: [{
+            label: 'Datasets',
+            data: catValues,
+            backgroundColor: '#2563EB',
+            hoverBackgroundColor: '#1D4ED8',
+            borderRadius: 6,
+            barThickness: 24,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#14213D',
+              titleFont: { family: 'Inter', size: 13, weight: 'bold' },
+              bodyFont: { family: 'Inter', size: 12 },
+              padding: 10,
+              cornerRadius: 8,
+              callbacks: {
+                label: function(context) {
+                  return ' ' + context.parsed.y + ' dataset' + (context.parsed.y === 1 ? '' : 's');
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: 'Inter', size: 11 }, color: '#64748B' }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0, font: { family: 'Inter', size: 11 }, color: '#64748B' },
+              grid: { color: '#E2E8F0', drawBorder: false }
+            }
+          }
+        }
+      });
+    }
+
+    // 2. Market Demand Doughnut Chart with Financial Tokens
+    const demandLabels = {{ demand_labels_json|safe }};
+    const demandValues = {{ demand_values_json|safe }};
+
+    const ctxDemand = document.getElementById('demandChart').getContext('2d');
+    new Chart(ctxDemand, {
+      type: 'doughnut',
+      data: {
+        labels: demandLabels,
+        datasets: [{
+          data: demandValues,
+          backgroundColor: ['#059669', '#2563EB', '#D97706'],
+          hoverBackgroundColor: ['#047857', '#1D4ED8', '#B45309'],
+          borderWidth: 3,
+          borderColor: '#FFFFFF'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              padding: 14,
+              font: { family: 'Inter', size: 12, weight: '500' },
+              color: '#475569'
+            }
+          },
+          tooltip: {
+            backgroundColor: '#14213D',
+            titleFont: { family: 'Inter', size: 13, weight: 'bold' },
+            bodyFont: { family: 'Inter', size: 12 },
+            padding: 10,
+            cornerRadius: 8,
+            callbacks: {
+              label: function(context) {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const val = context.parsed;
+                const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                return ' ' + context.label + ': ' + val + ' (' + pct + '%)';
+              }
+            }
+          }
+        },
+        cutout: '68%'
+      }
+    });
+  });
+</script>
+{% endif %}
+{% endblock %}

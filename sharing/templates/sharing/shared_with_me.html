@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+
+{% block title %}Shared With Me | Market Databank PRO{% endblock %}
+
+{% block content %}
+<!-- Executive Header -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1 text-dark">Shared With Me</h1>
+    <p class="text-muted small mb-0">Collaborative market intelligence repositories that other researchers have shared with your account.</p>
+  </div>
+  <a href="{% url 'databank:explore' %}" class="btn btn-outline-custom btn-sm d-inline-flex align-items-center gap-1">
+    <i class="bi bi-compass"></i>
+    <span>Explore Databank</span>
+  </a>
+</div>
+
+<!-- Search & Permission Filter Controls -->
+<div class="card card-premium p-3 mb-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <!-- Permission Filter Tabs -->
+    <ul class="nav nav-tabs-clean">
+      <li class="nav-item">
+        <a class="nav-link {% if not selected_permission %}active{% endif %}" href="?q={{ selected_query }}" aria-label="Show all shared records">
+          <i class="bi bi-collection me-1"></i> All Records
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if selected_permission == 'Editor' %}active{% endif %}" href="?permission=Editor&q={{ selected_query }}" aria-label="Show Editor access records">
+          <i class="bi bi-pencil-square me-1 text-warning"></i> Editor Access
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if selected_permission == 'Viewer' %}active{% endif %}" href="?permission=Viewer&q={{ selected_query }}" aria-label="Show Viewer access records">
+          <i class="bi bi-eye me-1 text-success"></i> Viewer Access
+        </a>
+      </li>
+    </ul>
+
+    <!-- Search Form -->
+    <form method="get" action="{% url 'sharing:shared_with_me' %}" class="d-flex align-items-center gap-1">
+      {% if selected_permission %}
+        <input type="hidden" name="permission" value="{{ selected_permission }}">
+      {% endif %}
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-search"></i></span>
+        <input type="text" name="q" class="form-control border-start-0" placeholder="Search title, company, owner..." value="{{ selected_query }}" aria-label="Search shared datasets">
+        <button type="submit" class="btn btn-primary-custom" title="Search">Search</button>
+      </div>
+      {% if selected_query or selected_permission %}
+        <a href="{% url 'sharing:shared_with_me' %}" class="btn btn-outline-secondary btn-sm" title="Clear Filters" aria-label="Clear Filters">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- Shared Datasets Table Card -->
+<div class="card card-premium overflow-hidden mb-4">
+  <div class="card-header card-header-clean d-flex align-items-center justify-content-between">
+    <div>
+      <span class="fw-bold text-dark"><i class="bi bi-share me-2 text-primary"></i>Shared Repositories</span>
+      <span class="badge bg-light text-muted border ms-2">{{ total_count }} record{{ total_count|pluralize }}</span>
+    </div>
+  </div>
+
+  {% if page_obj %}
+    <div class="table-responsive">
+      <table class="table table-premium align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Dataset Name</th>
+            <th>Company</th>
+            <th>Shared By</th>
+            <th>Permission Level</th>
+            <th>Shared Date</th>
+            <th>Owner Message</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in page_obj %}
+          <tr>
+            <!-- Dataset Title & Product/Service Subtitle -->
+            <td>
+              <a href="{% url 'databank:detail' s.dataset.pk %}" class="fw-bold text-dark text-decoration-none text-truncate d-block" style="max-width: 240px;" title="{{ s.dataset.title }}">
+                {{ s.dataset.title }}
+              </a>
+              <div class="small text-muted text-truncate" style="max-width: 240px; font-size: 0.76rem;" title="{{ s.dataset.product_service }}">
+                {{ s.dataset.product_service }}
+              </div>
+            </td>
+
+            <!-- Company Name -->
+            <td class="fw-semibold text-secondary">{{ s.dataset.company_name }}</td>
+
+            <!-- Shared By Owner -->
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="avatar-circle-sm bg-secondary-subtle text-dark" style="width: 24px; height: 24px; font-size: 0.75rem;">
+                  {{ s.shared_by.username|first|upper }}
+                </div>
+                <span class="fw-semibold text-dark small">@{{ s.shared_by.username }}</span>
+              </div>
+            </td>
+
+            <!-- High-Contrast Permission Badges (Phase 4 Specification) -->
+            <td>
+              {% if s.permission == 'Editor' %}
+                <span class="badge-perm-editor-hc">
+                  <i class="bi bi-pencil-square me-1"></i>Editor
+                </span>
+              {% else %}
+                <span class="badge-perm-viewer-hc">
+                  <i class="bi bi-eye me-1"></i>Viewer
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Shared Date -->
+            <td class="text-muted small">{{ s.shared_at|date:"M d, Y" }}</td>
+
+            <!-- Owner Message -->
+            <td>
+              {% if s.message %}
+                <span class="small text-muted text-truncate d-inline-block" style="max-width: 180px;" title="{{ s.message }}">
+                  {{ s.message }}
+                </span>
+              {% else %}
+                <span class="text-muted small">&mdash;</span>
+              {% endif %}
+            </td>
+
+            <!-- Permitted Actions Cluster -->
+            <td class="text-end pe-3">
+              <div class="d-inline-flex align-items-center gap-1">
+                <!-- View Details -->
+                <a href="{% url 'databank:detail' s.dataset.pk %}" class="btn btn-outline-custom table-action-btn" title="View Details" aria-label="View dataset details">
+                  <i class="bi bi-eye text-primary"></i>
+                </a>
+
+                <!-- Download CSV -->
+                <a href="{% url 'databank:export_csv' s.dataset.pk %}" class="btn btn-outline-custom table-action-btn" title="Download CSV" aria-label="Download CSV">
+                  <i class="bi bi-filetype-csv text-success"></i>
+                </a>
+
+                <!-- Download PDF Report -->
+                <a href="{% url 'databank:export_pdf' s.dataset.pk %}" class="btn btn-outline-custom table-action-btn" title="Download PDF Report" aria-label="Download PDF">
+                  <i class="bi bi-filetype-pdf text-danger"></i>
+                </a>
+
+                <!-- Edit Dataset (Only if user has Editor permission) -->
+                {% if s.permission == 'Editor' %}
+                  <a href="{% url 'databank:edit' s.dataset.pk %}" class="btn btn-outline-custom table-action-btn" title="Edit Dataset" aria-label="Edit dataset">
+                    <i class="bi bi-pencil text-primary"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Bar -->
+    {% if page_obj.has_other_pages %}
+    <div class="p-3 border-top d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <small class="text-muted">
+        Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ total_count }} shared datasets)
+      </small>
+      <nav aria-label="Page navigation">
+        <ul class="pagination pagination-sm mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ selected_query }}&permission={{ selected_permission }}">Previous</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ num }}&q={{ selected_query }}&permission={{ selected_permission }}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ selected_query }}&permission={{ selected_permission }}">Next</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state py-5">
+      <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+      <h5 class="fw-bold text-dark">No Shared Datasets Found</h5>
+      {% if selected_query or selected_permission %}
+        <p class="text-muted small mb-3">No shared datasets matched your active search query or permission filter.</p>
+        <a href="{% url 'sharing:shared_with_me' %}" class="btn btn-outline-custom btn-sm">
+          <i class="bi bi-arrow-clockwise me-1"></i> Reset Filters
+        </a>
+      {% else %}
+        <p class="text-muted small mb-3" style="max-width: 480px; margin: 0 auto;">
+          Datasets shared with your account by other researchers will appear here with your assigned Viewer or Editor permissions.
+        </p>
+        <a href="{% url 'databank:explore' %}" class="btn btn-primary-custom btn-sm mt-2">
+          <i class="bi bi-compass me-1"></i> Explore Public Repository
+        </a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

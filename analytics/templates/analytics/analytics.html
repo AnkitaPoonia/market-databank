@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+
+{% block title %}Macro Market Analytics & Intelligence | Market Databank PRO{% endblock %}
+
+{% block content %}
+<!-- Executive Analytics Header -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1 text-dark">Macro Market Analytics & Sector Intelligence</h1>
+    <p class="text-muted small mb-0">
+      Aggregated market valuation trends, demand trajectories, and corporate distributions computed directly from live database records.
+    </p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'databank:explore' %}" class="btn btn-outline-custom btn-sm d-inline-flex align-items-center gap-1">
+      <i class="bi bi-compass"></i>
+      <span>Browse Databank</span>
+    </a>
+    <a href="{% url 'databank:create' %}" class="btn btn-primary-custom btn-sm d-inline-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-plus-lg"></i>
+      <span>New Dataset</span>
+    </a>
+  </div>
+</div>
+
+<!-- Macro-Stat Cards Grid (Distinct Iconography from Dashboard) -->
+<div class="row g-3 mb-4">
+  <!-- Macro Card 1: Total Datasets -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="stat-label">Total Records</span>
+        <div class="stat-icon bg-primary-subtle text-primary">
+          <i class="bi bi-layers-half"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_datasets }}</div>
+      <div class="small text-muted mt-2 d-flex align-items-center gap-1">
+        <i class="bi bi-database me-1 text-primary"></i>
+        <span>Platform databank repository</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Macro Card 2: Market Sectors -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="stat-label">Market Sectors</span>
+        <div class="stat-icon bg-success-subtle text-success">
+          <i class="bi bi-grid-3x3-gap"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_categories }}</div>
+      <div class="small text-muted mt-2 d-flex align-items-center gap-1">
+        <i class="bi bi-tags me-1 text-success"></i>
+        <span>Active industry categories</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Macro Card 3: Tracked Companies -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="stat-label">Companies Tracked</span>
+        <div class="stat-icon bg-info-subtle text-info">
+          <i class="bi bi-buildings"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_companies }}</div>
+      <div class="small text-muted mt-2 d-flex align-items-center gap-1">
+        <i class="bi bi-building-check me-1 text-info"></i>
+        <span>Unique corporate entities</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Macro Card 4: Avg Benchmark Price -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="stat-label">Mean Benchmark Price</span>
+        <div class="stat-icon bg-warning-subtle text-warning">
+          <i class="bi bi-cash-stack"></i>
+        </div>
+      </div>
+      <div class="stat-value">₹ {{ avg_price_overall|floatformat:2 }}</div>
+      <div class="small text-muted mt-2 d-flex align-items-center gap-1">
+        <i class="bi bi-calculator me-1 text-warning"></i>
+        <span>Arithmetic mean price</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if total_datasets > 0 %}
+<!-- Analytical Charts Grid (2x2 Layout with Working PNG Export) -->
+<div class="row g-4 mb-4">
+  <!-- Chart 1: Datasets by Sector -->
+  <div class="col-lg-6">
+    <div class="card card-premium h-100">
+      <div class="card-header card-header-clean d-flex align-items-center justify-content-between">
+        <div>
+          <span class="fw-bold text-dark"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Datasets by Sector</span>
+          <div class="text-muted small" style="font-size: 0.75rem;">Volume of research records per industry category</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-light text-muted border">Live DB</span>
+          <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.72rem;" onclick="downloadChartImage('categoryChart', 'sector-distribution.png')" title="Export Chart as PNG" aria-label="Export Sector Chart as PNG">
+            <i class="bi bi-download me-1"></i>PNG
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <div class="chart-wrapper">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 2: Demand Trajectory Breakdown -->
+  <div class="col-lg-6">
+    <div class="card card-premium h-100">
+      <div class="card-header card-header-clean d-flex align-items-center justify-content-between">
+        <div>
+          <span class="fw-bold text-dark"><i class="bi bi-pie-chart-fill me-2 text-primary"></i>Market Demand Distribution</span>
+          <div class="text-muted small" style="font-size: 0.75rem;">Breakdown of demand momentum (High, Medium, Low)</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-light text-muted border">Live DB</span>
+          <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.72rem;" onclick="downloadChartImage('demandChart', 'demand-distribution.png')" title="Export Chart as PNG" aria-label="Export Demand Chart as PNG">
+            <i class="bi bi-download me-1"></i>PNG
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <div class="chart-wrapper">
+          <canvas id="demandChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 3: Top Represented Companies -->
+  <div class="col-lg-6">
+    <div class="card card-premium h-100">
+      <div class="card-header card-header-clean d-flex align-items-center justify-content-between">
+        <div>
+          <span class="fw-bold text-dark"><i class="bi bi-buildings-fill me-2 text-primary"></i>Top Companies Tracked</span>
+          <div class="text-muted small" style="font-size: 0.75rem;">Corporate entities with highest dataset coverage</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-light text-muted border">Live DB</span>
+          <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.72rem;" onclick="downloadChartImage('companyChart', 'top-companies-tracked.png')" title="Export Chart as PNG" aria-label="Export Companies Chart as PNG">
+            <i class="bi bi-download me-1"></i>PNG
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <div class="chart-wrapper">
+          <canvas id="companyChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 4: Average Benchmark Price by Sector -->
+  <div class="col-lg-6">
+    <div class="card card-premium h-100">
+      <div class="card-header card-header-clean d-flex align-items-center justify-content-between">
+        <div>
+          <span class="fw-bold text-dark"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Avg Benchmark Price by Sector (₹)</span>
+          <div class="text-muted small" style="font-size: 0.75rem;">Mean pricing baseline comparison across sectors</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-light text-muted border">Live DB</span>
+          <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.72rem;" onclick="downloadChartImage('priceByCatChart', 'avg-price-by-sector.png')" title="Export Chart as PNG" aria-label="Export Price Chart as PNG">
+            <i class="bi bi-download me-1"></i>PNG
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <div class="chart-wrapper">
+          <canvas id="priceByCatChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+  <!-- Empty State for Analytics when 0 Datasets in Database -->
+  <div class="card card-premium py-5 text-center my-4">
+    <div class="empty-state">
+      <div class="empty-state-icon"><i class="bi bi-bar-chart"></i></div>
+      <h4 class="fw-bold text-dark">No Market Datasets Available for Analytics</h4>
+      <p class="text-muted small mb-4" style="max-width: 500px; margin: 0 auto;">
+        The repository currently contains no verified market datasets. Analytical distributions and macro valuation trends will populate automatically once records are created.
+      </p>
+      <a href="{% url 'databank:create' %}" class="btn btn-primary-custom btn-sm">
+        <i class="bi bi-plus-circle me-1"></i> Create Initial Market Dataset
+      </a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if total_datasets > 0 %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Shared Tooltip Styling
+    const sharedTooltipOptions = {
+      backgroundColor: '#14213D',
+      titleFont: { family: 'Inter', size: 13, weight: 'bold' },
+      bodyFont: { family: 'Inter', size: 12 },
+      padding: 10,
+      cornerRadius: 8,
+    };
+
+    // 1. Sector Breakdown Chart
+    const catLabels = {{ cat_labels_json|safe }};
+    const catData = {{ cat_data_json|safe }};
+
+    if (catLabels && catLabels.length > 0) {
+      const ctxCat = document.getElementById('categoryChart').getContext('2d');
+      new Chart(ctxCat, {
+        type: 'bar',
+        data: {
+          labels: catLabels,
+          datasets: [{
+            label: 'Datasets Count',
+            data: catData,
+            backgroundColor: '#2563EB',
+            hoverBackgroundColor: '#1D4ED8',
+            borderRadius: 6,
+            barThickness: 24,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              ...sharedTooltipOptions,
+              callbacks: {
+                label: function(context) {
+                  return ' ' + context.parsed.y + ' dataset' + (context.parsed.y === 1 ? '' : 's');
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: 'Inter', size: 11 }, color: '#64748B' }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0, font: { family: 'Inter', size: 11 }, color: '#64748B' },
+              grid: { color: '#E2E8F0', drawBorder: false }
+            }
+          }
+        }
+      });
+    }
+
+    // 2. Demand Doughnut Chart
+    const demandLabels = {{ demand_labels_json|safe }};
+    const demandData = {{ demand_data_json|safe }};
+
+    const ctxDemand = document.getElementById('demandChart').getContext('2d');
+    new Chart(ctxDemand, {
+      type: 'doughnut',
+      data: {
+        labels: demandLabels,
+        datasets: [{
+          data: demandData,
+          backgroundColor: ['#059669', '#2563EB', '#D97706'],
+          hoverBackgroundColor: ['#047857', '#1D4ED8', '#B45309'],
+          borderWidth: 3,
+          borderColor: '#FFFFFF'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              padding: 14,
+              font: { family: 'Inter', size: 12, weight: '500' },
+              color: '#475569'
+            }
+          },
+          tooltip: {
+            ...sharedTooltipOptions,
+            callbacks: {
+              label: function(context) {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const val = context.parsed;
+                const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                return ' ' + context.label + ': ' + val + ' (' + pct + '%)';
+              }
+            }
+          }
+        },
+        cutout: '68%'
+      }
+    });
+
+    // 3. Top Companies Horizontal Bar Chart
+    const companyLabels = {{ company_labels_json|safe }};
+    const companyData = {{ company_data_json|safe }};
+
+    if (companyLabels && companyLabels.length > 0) {
+      const ctxComp = document.getElementById('companyChart').getContext('2d');
+      new Chart(ctxComp, {
+        type: 'bar',
+        data: {
+          labels: companyLabels,
+          datasets: [{
+            label: 'Datasets Tracked',
+            data: companyData,
+            backgroundColor: '#14213D',
+            hoverBackgroundColor: '#1E293B',
+            borderRadius: 6,
+            barThickness: 20,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              ...sharedTooltipOptions,
+              callbacks: {
+                label: function(context) {
+                  return ' ' + context.parsed.x + ' dataset' + (context.parsed.x === 1 ? '' : 's') + ' recorded';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: { precision: 0, font: { family: 'Inter', size: 11 }, color: '#64748B' },
+              grid: { color: '#E2E8F0', drawBorder: false }
+            },
+            y: {
+              grid: { display: false },
+              ticks: { font: { family: 'Inter', size: 11 }, color: '#64748B' }
+            }
+          }
+        }
+      });
+    }
+
+    // 4. Avg Benchmark Price by Sector Chart (with ₹ formatting)
+    const priceCatLabels = {{ price_cat_labels_json|safe }};
+    const priceCatData = {{ price_cat_data_json|safe }};
+
+    if (priceCatLabels && priceCatLabels.length > 0) {
+      const ctxPrice = document.getElementById('priceByCatChart').getContext('2d');
+      new Chart(ctxPrice, {
+        type: 'bar',
+        data: {
+          labels: priceCatLabels,
+          datasets: [{
+            label: 'Average Benchmark Price (₹)',
+            data: priceCatData,
+            backgroundColor: '#059669',
+            hoverBackgroundColor: '#047857',
+            borderRadius: 6,
+            barThickness: 24,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              ...sharedTooltipOptions,
+              callbacks: {
+                label: function(context) {
+                  return ' Avg Price: ₹ ' + Number(context.parsed.y).toLocaleString('en-IN', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  });
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: 'Inter', size: 11 }, color: '#64748B' }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                font: { family: 'Inter', size: 11 },
+                color: '#64748B',
+                callback: function(value) {
+                  return '₹ ' + Number(value).toLocaleString('en-IN');
+                }
+              },
+              grid: { color: '#E2E8F0', drawBorder: false }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

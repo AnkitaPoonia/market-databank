@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}Market Databank - Your Central Hub for Market Intelligence{% endblock %}
+
+{% block standalone_content %}
+<!-- Hero Section -->
+<section class="hero-section text-center text-lg-start">
+  <div class="container py-4">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7">
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 mb-3 rounded-pill bg-white bg-opacity-10 text-white small border border-white border-opacity-25">
+          <i class="bi bi-stars text-warning"></i>
+          <span>Academic & Industry Market Intelligence</span>
+        </div>
+        <h1 class="hero-title mb-3">Your Central Hub for Market Intelligence</h1>
+        <p class="hero-lead mb-4">
+          Collect, generate, store, organize, analyze, and securely share structured market research datasets. Empowering students, researchers, and business analysts with verified market databanks.
+        </p>
+        <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-lg-start">
+          {% if user.is_authenticated %}
+            <a href="{% url 'databank:dashboard' %}" class="btn btn-primary-custom btn-lg px-4 shadow">
+              <i class="bi bi-speedometer2 me-2"></i> Go to Dashboard
+            </a>
+          {% else %}
+            <a href="{% url 'accounts:register' %}" class="btn btn-primary-custom btn-lg px-4 shadow">
+              <i class="bi bi-lightning-charge me-2"></i> Get Started Free
+            </a>
+          {% endif %}
+          <a href="{% url 'databank:explore' %}" class="btn btn-outline-light btn-lg px-4">
+            <i class="bi bi-compass me-2"></i> Explore Databank
+          </a>
+        </div>
+
+        <div class="row g-4 mt-4 pt-3 border-top border-white border-opacity-10 text-start">
+          <div class="col-4">
+            <div class="h3 fw-bold mb-0 text-white">100%</div>
+            <div class="small text-secondary">Verified Data</div>
+          </div>
+          <div class="col-4">
+            <div class="h3 fw-bold mb-0 text-white">CSV & PDF</div>
+            <div class="small text-secondary">Instant Export</div>
+          </div>
+          <div class="col-4">
+            <div class="h3 fw-bold mb-0 text-white">RBAC</div>
+            <div class="small text-secondary">Secure Sharing</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="card bg-white text-dark shadow-lg border-0 rounded-4 overflow-hidden">
+          <div class="card-header bg-light border-bottom d-flex align-items-center justify-content-between py-3 px-4">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-primary">Live Preview</span>
+              <span class="fw-bold small">Market Intelligence Card</span>
+            </div>
+            <i class="bi bi-three-dots text-muted"></i>
+          </div>
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <span class="badge bg-secondary-subtle text-secondary mb-1">Automobile</span>
+                <h5 class="fw-bold mb-0">Tata Motors Commercial Vehicles</h5>
+              </div>
+              <span class="badge-demand-high">High Demand</span>
+            </div>
+            <p class="text-muted small mb-3">
+              Comprehensive market valuation, electric propulsion adoption metrics, and domestic fleet demand tracking.
+            </p>
+            <div class="bg-light p-3 rounded-3 mb-3">
+              <div class="row g-2 text-center">
+                <div class="col-6">
+                  <div class="text-muted small">Market Price</div>
+                  <div class="fw-bold text-primary">₹ 980,000</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted small">Est. Market Size</div>
+                  <div class="fw-bold text-success">₹ 42.5 Billion</div>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center text-muted small">
+              <span><i class="bi bi-person me-1"></i> Research Analyst</span>
+              <span><i class="bi bi-shield-check text-success me-1"></i> Public Dataset</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5 bg-white" id="features">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-semibold">Platform Capabilities</span>
+      <h2 class="display-6 fw-bold mt-2">Comprehensive Market Research Workflow</h2>
+      <p class="text-muted col-lg-6 mx-auto">
+        Everything required to structure unstructured research notes into rigorous, queryable market databanks.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-box">
+          <div class="feature-icon-wrapper">
+            <i class="bi bi-database-add"></i>
+          </div>
+          <h4 class="h5 mb-2">Structured Data Generation</h4>
+          <p class="text-muted small mb-0">
+            Define corporate metrics including industry categorization, pricing models, market size, growth rates, and source verification.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-box">
+          <div class="feature-icon-wrapper">
+            <i class="bi bi-share-fill"></i>
+          </div>
+          <h4 class="h5 mb-2">Granular Role-Based Sharing</h4>
+          <p class="text-muted small mb-0">
+            Collaborate safely with colleagues. Grant strict "Viewer" reading rights or collaborative "Editor" privileges without relinquishing ownership.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-box">
+          <div class="feature-icon-wrapper">
+            <i class="bi bi-pie-chart-fill"></i>
+          </div>
+          <h4 class="h5 mb-2">Dynamic Analytics</h4>
+          <p class="text-muted small mb-0">
+            Visualize your research inventory with automated category distributions, demand spread, and historical creation trends powered by Chart.js.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-box">
+          <div class="feature-icon-wrapper">
+            <i class="bi bi-file-earmark-arrow-down-fill"></i>
+          </div>
+          <h4 class="h5 mb-2">Secure CSV & PDF Export</h4>
+          <p class="text-muted small mb-0">
+            Export verified dataset rows on-demand with formula sanitization, UTF-8 BOM, and publication-ready PDF reports generated via ReportLab.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-box">
+          <div class="feature-icon-wrapper">
+            <i class="bi bi-funnel-fill"></i>
+          </div>
+          <h4 class="h5 mb-2">Multi-Parameter Search</h4>
+          <p class="text-muted small mb-0">
+            Filter repositories seamlessly across industry verticals, market demand levels, corporate entities, and visibility states.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-box">
+          <div class="feature-icon-wrapper">
+            <i class="bi bi-shield-lock-fill"></i>
+          </div>
+          <h4 class="h5 mb-2">Enterprise-Grade Security</h4>
+          <p class="text-muted small mb-0">
+            Strict Django ORM query scoping, session management, CSRF tokens, and zero information leakage on private datasets.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-light" id="how-it-works">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <span class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill fw-semibold">Simple Workflow</span>
+      <h2 class="display-6 fw-bold mt-2">How Market Databank Works</h2>
+      <p class="text-muted col-lg-6 mx-auto">
+        Four straightforward steps from initial research collection to team-wide collaboration.
+      </p>
+    </div>
+
+    <div class="row g-4 text-center">
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100 rounded-3">
+          <div class="mx-auto rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; font-weight: 800;">1</div>
+          <h5 class="fw-bold mb-2">Create Account</h5>
+          <p class="text-muted small mb-0">Register with secure Django password hashing and initialize your private workspace.</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100 rounded-3">
+          <div class="mx-auto rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; font-weight: 800;">2</div>
+          <h5 class="fw-bold mb-2">Enter Market Data</h5>
+          <p class="text-muted small mb-0">Input structured market metrics with field-level validation and source citations.</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100 rounded-3">
+          <div class="mx-auto rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; font-weight: 800;">3</div>
+          <h5 class="fw-bold mb-2">Manage & Share</h5>
+          <p class="text-muted small mb-0">Mark datasets public or share privately with specific team members as Viewer or Editor.</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100 rounded-3">
+          <div class="mx-auto rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; font-weight: 800;">4</div>
+          <h5 class="fw-bold mb-2">Analyze & Export</h5>
+          <p class="text-muted small mb-0">Explore visual charts, inspect market demand trends, and download sanitized CSV & PDF reports.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-5 bg-dark text-white text-center">
+  <div class="container py-4">
+    <h2 class="display-6 fw-bold mb-3">Ready to Build Your Market Repository?</h2>
+    <p class="text-secondary col-lg-6 mx-auto mb-4">
+      Join fellow researchers and business students maintaining organized, validated market intelligence.
+    </p>
+    <div class="d-flex justify-content-center gap-3">
+      {% if user.is_authenticated %}
+        <a href="{% url 'databank:create' %}" class="btn btn-primary-custom btn-lg px-4">
+          <i class="bi bi-plus-circle me-1"></i> Create Your First Dataset
+        </a>
+      {% else %}
+        <a href="{% url 'accounts:register' %}" class="btn btn-primary-custom btn-lg px-4">
+          <i class="bi bi-person-plus me-1"></i> Register Account Now
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
